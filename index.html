@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0f11" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="宿舍健身">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<title>宿舍健身 · 每日任务</title>
+<style>
+:root{
+  --bg:#f7f7f8; --card:#fff; --ink:#141416; --ink2:#6b6f76; --ink3:#9aa0a6;
+  --line:#e8e8ec; --accent:#2f6fed; --accent-soft:#eaf1ff;
+  --ok:#18895b; --ok-soft:#e6f6ee; --warn:#b45309;
+  --r:16px; --sh:0 1px 2px rgba(16,18,22,.04),0 6px 20px rgba(16,18,22,.05);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e0f11; --card:#17181b; --ink:#f1f2f4; --ink2:#a2a7ae; --ink3:#71767d;
+    --line:#26282c; --accent:#6b9bff; --accent-soft:#1b2438;
+    --ok:#4ecb92; --ok-soft:#16281f; --warn:#f0b45e;
+    --sh:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.3);
+  }
+  :root{ --theme:#0e0f11; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);overflow-x:hidden;
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif}
+body{padding-bottom:calc(72px + var(--safe-b))}
+.app{max-width:560px;margin:0 auto;padding:0 16px;overflow-x:hidden}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+.muted{color:var(--ink2)}
+.small{font-size:12.5px}
+
+/* ---------- header ---------- */
+header{padding:calc(14px + env(safe-area-inset-top,0px)) 0 8px}
+.eyebrow{font-size:12.5px;color:var(--ink2);letter-spacing:.04em}
+.h-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:2px}
+.h-row h1{font-size:23px;line-height:1.2}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin:0 0 12px}
+.card.tight{padding:12px 14px}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.sep{height:1px;background:var(--line);margin:12px 0}
+
+/* ---------- progress ring ---------- */
+.ring{width:64px;height:64px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg);display:block}
+.ring .pct{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;font-weight:700}
+
+/* ---------- exercise card ---------- */
+.ex{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.ex:last-child{border-bottom:0;padding-bottom:2px}
+.ex .fig{width:60px;height:50px;flex:none;color:var(--ink);background:var(--accent-soft);
+  border-radius:12px;padding:4px 2px;overflow:visible}
+.ex .grow{min-width:0}
+.ex .nm{font-weight:600;font-size:15px}
+.ex .mt{font-size:12.5px;color:var(--ink2);margin-top:1px}
+.dots{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.dot{width:22px;height:22px;border-radius:50%;border:1.6px solid var(--line);
+  background:transparent;color:var(--ink3);font-size:11px;font-weight:700;
+  display:grid;place-items:center;padding:0;cursor:pointer;transition:.15s}
+.dot.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.done-label{color:var(--ok);font-size:12.5px;font-weight:600}
+
+/* ---------- buttons / chips ---------- */
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.btn{display:block;width:100%;padding:13px;border-radius:14px;background:var(--accent);
+  color:#fff;font-weight:650;font-size:15px;text-align:center}
+.btn.ghost{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1.4px var(--line)}
+.btn.soft{background:var(--accent-soft);color:var(--accent)}
+.btn.sm{width:auto;padding:8px 14px;font-size:13.5px;border-radius:11px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+  background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600}
+.chip.gray{background:rgba(127,127,127,.12);color:var(--ink2)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+
+/* ---------- tabs ---------- */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:color-mix(in srgb,var(--card) 86%,transparent);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);backdrop-filter:saturate(180%) blur(14px);
+  border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
+.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tab{display:grid;justify-items:center;gap:3px;padding:9px 0 8px;color:var(--ink3);font-size:11px;min-width:0}
+.tab .ic{width:22px;height:22px}
+.tab.on{color:var(--accent)}
+.tab.on .ic{color:var(--accent)}
+
+/* ---------- sheet ---------- */
+.sheet-bd{position:fixed;inset:0;background:rgba(10,12,16,.42);z-index:60;
+  opacity:0;pointer-events:none;transition:.22s}
+.sheet-bd.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;max-height:92vh;overflow:auto;
+  background:var(--card);border-radius:22px 22px 0 0;padding:8px 18px calc(20px + var(--safe-b));
+  transform:translateY(102%);transition:transform .26s cubic-bezier(.22,.8,.3,1);
+  max-width:560px;margin:0 auto;box-shadow:0 -10px 40px rgba(0,0,0,.18)}
+.sheet.on{transform:none}
+.grab{width:38px;height:4px;border-radius:9px;background:var(--line);margin:6px auto 14px}
+.sheet .big{width:100%;height:190px;color:var(--ink);background:var(--accent-soft);
+  border-radius:16px;padding:10px;margin-bottom:14px}
+.sheet h2{font-size:20px}
+.kv{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+.tips{margin:12px 0 0;padding:0;list-style:none}
+.tips li{position:relative;padding-left:18px;margin:8px 0;font-size:14px;color:var(--ink)}
+.tips li:before{content:"";position:absolute;left:4px;top:8px;width:6px;height:6px;
+  border-radius:50%;background:var(--accent)}
+
+/* ---------- rest pill ---------- */
+.rest{position:fixed;left:50%;transform:translate(-50%,160%);bottom:calc(84px + var(--safe-b));
+  z-index:50;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 16px;
+  background:#111417;color:#fff;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.3);
+  transition:transform .25s,opacity .2s;font-size:14px;font-weight:600;white-space:nowrap;
+  opacity:0;pointer-events:none}
+.rest.on{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.rest b{font-variant-numeric:tabular-nums;font-size:16px}
+.rest button{color:#fff;opacity:.65;font-size:12.5px;padding:6px 10px;border-radius:999px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+
+/* ---------- misc ---------- */
+.week-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.week-row:last-child{border-bottom:0}
+.week-row .day{width:44px;flex:none;font-weight:650;font-size:14px}
+.week-row.today .day{color:var(--accent)}
+.bars{display:flex;align-items:flex-end;gap:7px;height:76px;margin-top:14px}
+.bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bars .b i{display:block;width:100%;border-radius:6px 6px 3px 3px;background:var(--accent-soft);
+  min-height:4px}
+.bars .b i.f{background:var(--accent)}
+.bars .b span{font-size:10.5px;color:var(--ink3)}
+.stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--sh);text-align:center}
+.stat b{display:block;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.stat span{font-size:11.5px;color:var(--ink2)}
+.switch{position:relative;width:48px;height:28px;border-radius:999px;background:var(--line);transition:.2s;flex:none}
+.switch.on{background:var(--ok)}
+.switch:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.on:after{left:23px}
+.note{background:var(--accent-soft);color:var(--ink);border-radius:14px;padding:12px 14px;font-size:13.5px}
+.note b{color:var(--accent)}
+footer{text-align:center;color:var(--ink3);font-size:11.5px;padding:18px 0 6px}
+.fig{display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="eyebrow" id="eyebrow"></div>
+    <div class="h-row">
+      <h1 id="title"></h1>
+      <div id="head-right"></div>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs"><div class="in" id="tabs"></div></nav>
+
+<div class="sheet-bd" id="bd"></div>
+<div class="sheet" id="sheet"></div>
+<div class="rest" id="rest"><span>休息</span><b id="rest-t">60</b><button id="rest-skip">跳过</button></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   1. 动作库：每个动作一张手绘矢量图示
+   ============================================================ */
+const FIG = (inner) => `<svg class="fig" viewBox="0 0 120 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 88h104" stroke-opacity=".16" stroke-width="1.6"/>${inner}</g></svg>`;
+const H = (x,y) => `<circle cx="${x}" cy="${y}" r="5.4" fill="currentColor" stroke="none"/>`;
+
+const EX = {
+  pushup:{name:'标准俯卧撑',tag:'胸 · 肱三头 · 核心',unit:'次',tips:[
+    '身体从头到脚跟一条直线，屁股不要塌也不要撅。',
+    '肘部约 45° 夹向身体（不要完全外展成 90°），胸口降到离地一拳。',
+    '宿舍硬地板硌手腕：握拳撑，或两手各垫一本厚书。',
+    '做不动就先做上斜俯卧撑，能标准做 12 个再加难度。'],
+    fig:FIG(H(86,50)+`<path d="M78 56 52 63 24 79"/><path d="M24 79 15 84"/><path d="M78 56 81 70 85 84"/><path d="M74 57 77 71 81 84" stroke-opacity=".38"/>`)},
+
+  incline_pushup:{name:'上斜俯卧撑',tag:'胸 · 入门友好',unit:'次',tips:[
+    '双手撑在床沿、桌边或椅子上，身体斜向下。',
+    '手撑得越高越轻松，新手从这里起步最容易建立动作模式。',
+    '同样保持肩、髋、踝一条直线。'],
+    fig:FIG(H(82,56)+`<path d="M74 62 46 72 24 84"/><path d="M74 62 80 68 86 74"/><path d="M86 74h24M96 74v14M86 88h24" stroke-opacity=".45"/>`)},
+
+  decline_pushup:{name:'下斜俯卧撑',tag:'上胸 · 肩',unit:'次',tips:[
+    '双脚踩在床沿或椅子上，双手撑地，身体斜向下。',
+    '越高越难，是标准俯卧撑做腻后的第一个进阶。',
+    '注意别让腰塌下去，宁可把脚放低一点。'],
+    fig:FIG(H(86,54)+`<path d="M78 60 52 68 28 66"/><path d="M78 60 82 72 86 84"/><path d="M14 66h26M26 66v22" stroke-opacity=".45"/>`)},
+
+  pike_pushup:{name:'折体俯卧撑',tag:'肩 · 上背',unit:'次',tips:[
+    '臀部高高顶起成倒 V 字，手撑地，头顶朝地面下降。',
+    '这是没有哑铃时练肩最好的自重动作。',
+    '头在两手之间下去，别砸地面，控制住。'],
+    fig:FIG(H(78,52)+`<path d="M72 58 50 38 26 84"/><path d="M72 58 78 70 84 84"/>`)},
+
+  squat:{name:'徒手深蹲',tag:'大腿 · 臀',unit:'次',tips:[
+    '双脚与肩同宽，脚尖略外八，重心落在整个脚掌。',
+    '像往后坐椅子一样先屈髋，膝盖跟着脚尖方向走。',
+    '大腿蹲到接近水平即可，全程背部挺直、不弓腰。',
+    '膝盖不舒服就减小幅度，或扶着床沿做。'],
+    fig:FIG(H(58,23)+`<path d="M56 32 48 56"/><path d="M48 56 70 62 62 84"/><path d="M62 84h13"/><path d="M56 32 74 42"/>`)},
+
+  bulgarian:{name:'保加利亚分腿蹲',tag:'腿 · 臀（单腿）',unit:'次',tips:[
+    '后脚脚背搭在床沿/椅子上，前脚向前一大步。',
+    '下蹲时前腿膝盖对准脚尖，重心压在前脚。',
+    '这是自重条件下最强的腿部动作之一，比深蹲更累。',
+    '平衡不稳就扶墙，先做 6 个也行。'],
+    fig:FIG(H(52,26)+`<path d="M58 52 54 34"/><path d="M58 52 46 66 44 86"/><path d="M44 86h11"/><path d="M58 52 78 68 92 62"/><path d="M86 62h24M96 62v26M86 88h24" stroke-opacity=".45"/>`)},
+
+  lunge:{name:'原地弓步蹲',tag:'腿 · 臀',unit:'次',tips:[
+    '一腿向前迈出，前腿膝盖约 90°，后腿膝盖接近地面但不触地。',
+    '躯干保持直立，别往前扑。',
+    '左右交替算一组，也可以一条腿做完再换。'],
+    fig:FIG(H(52,25)+`<path d="M52 34 50 58"/><path d="M50 58 70 64 72 84"/><path d="M72 84h10"/><path d="M50 58 32 74 26 86"/><path d="M26 86H17"/><path d="M52 34 40 46"/>`)},
+
+  wall_sit:{name:'靠墙静蹲',tag:'大腿静力',unit:'秒',hold:true,tips:[
+    '背贴墙，大腿与地面平行，小腿垂直地面。',
+    '膝盖不要超过脚尖，重心在脚跟。',
+    '安静、无跳动，适合楼下有人的宿舍。'],
+    fig:FIG(`<path d="M26 12v76" stroke-opacity=".4"/>`+H(36,26)+`<path d="M34 36v20"/><path d="M34 56h26v28"/><path d="M60 84h11"/>`)},
+
+  glute_bridge:{name:'臀桥',tag:'臀部 · 腿后侧',unit:'次',tips:[
+    '仰卧屈膝，脚掌踩地，臀部发力把髋顶起。',
+    '顶到肩、髋、膝一条直线，顶点夹紧臀部停 1 秒。',
+    '进阶：一条腿伸直做单腿臀桥。'],
+    fig:FIG(H(20,77)+`<path d="M28 80 52 58 66 70 72 86"/><path d="M72 86h9"/><path d="M58 50v-9M55 44l3-3 3 3" stroke-opacity=".6"/>`)},
+
+  calf_raise:{name:'提踵',tag:'小腿',unit:'次',tips:[
+    '站直，慢慢踮起脚尖到最高点停 1 秒，再慢慢落下。',
+    '扶墙保持平衡，做慢一点效果才好。',
+    '台阶边缘做可以加大幅度。'],
+    fig:FIG(H(56,18)+`<path d="M56 30 56 46 56 62 55 78 66 86"/><path d="M74 82v-12M70 74l4-4 4 4" stroke-opacity=".6"/>`)},
+
+  plank:{name:'平板支撑',tag:'核心 · 抗伸展',unit:'秒',hold:true,tips:[
+    '前臂撑地，肘在肩正下方，身体一条直线。',
+    '收紧腹部和臀部，别塌腰翘臀。',
+    '宁可 30 秒标准，不要 2 分钟塌腰。'],
+    fig:FIG(H(25,59)+`<path d="M34 64 62 68 90 84"/><path d="M34 64 30 82"/><path d="M28 84h16"/>`)},
+
+  side_plank:{name:'侧平板支撑',tag:'侧腹 · 稳定',unit:'秒',hold:true,tips:[
+    '侧卧用一侧前臂撑地，身体侧向一条直线。',
+    '另一只手可以叉腰或向上举。',
+    '两侧各做，时间从 20 秒起步。'],
+    fig:FIG(H(40,60)+`<path d="M46 66 70 70 92 84"/><path d="M46 66 36 84"/><path d="M34 84h11"/><path d="M46 66V42"/>`)},
+
+  mountain_climber:{name:'登山跑',tag:'核心 · 心肺',unit:'秒',hold:true,tips:[
+    '保持俯卧撑起始姿势，交替把膝盖收向胸口。',
+    '速度适中，别让屁股上下颠。',
+    '宿舍可用：落地轻、可控节奏来做，几乎没有噪音。'],
+    fig:FIG(H(33,57)+`<path d="M40 62 66 64"/><path d="M66 64 86 72 94 82"/><path d="M66 64 54 74 46 82"/><path d="M40 62 36 74 34 84"/>`)},
+
+  crunch:{name:'卷腹',tag:'上腹',unit:'次',tips:[
+    '仰卧屈膝，双手轻放耳侧，用腹部把肩胛骨卷离地面。',
+    '不要抱头用力拉脖子，下巴留一拳空隙。',
+    '起来时呼气，下放时控制住。'],
+    fig:FIG(H(80,64)+`<path d="M62 84 74 70"/><path d="M62 84 44 68 30 84"/><path d="M30 84H20"/><path d="M74 70 78 58"/>`)},
+
+  reverse_crunch:{name:'反向卷腹',tag:'下腹',unit:'次',tips:[
+    '仰卧，双腿屈膝抬起，用下腹发力把臀部卷离地面。',
+    '不是靠腿甩，是骨盆向后卷。',
+    '动作幅度小，慢是重点。'],
+    fig:FIG(H(16,80)+`<path d="M24 84 54 82 72 66 60 50"/><path d="M62 74 50 70M55 67l-5 3 3 5" stroke-opacity=".6"/>`)},
+
+  dead_bug:{name:'死虫式',tag:'核心 · 稳定',unit:'次',tips:[
+    '仰卧，双手指向天花板，双腿屈膝 90° 抬起。',
+    '对侧手脚同时慢慢伸远，腰始终贴地。',
+    '这是保护腰椎最好的核心动作，久坐人群必练。'],
+    fig:FIG(H(20,72)+`<path d="M28 76 66 80"/><path d="M28 76 22 50"/><path d="M66 80 64 56 52 50"/><path d="M66 80 90 82" stroke-opacity=".38"/><path d="M28 76 12 78" stroke-opacity=".38"/>`)},
+
+  superman:{name:'超人式',tag:'下背 · 竖脊肌',unit:'次',tips:[
+    '俯卧，同时抬起双手和双腿，用下背发力。',
+    '抬起时呼气，顶点停 1–2 秒，别憋气。',
+    '腰椎有伤史的话先咨询医生。'],
+    fig:FIG(H(30,60)+`<path d="M34 72 64 78"/><path d="M34 72 12 58"/><path d="M64 78 86 64"/><path d="M64 78 78 84" stroke-opacity=".35"/><path d="M34 72 20 76" stroke-opacity=".35"/>`)},
+
+  prone_y:{name:'俯卧 Y 字',tag:'上背 · 改善圆肩',unit:'次',tips:[
+    '俯卧，双臂向斜前方伸成 Y 字，拇指朝上。',
+    '用背部发力把手臂抬离地面，肩胛骨向下夹。',
+    '久坐含胸的救星，每天做都不嫌多。'],
+    fig:FIG(H(60,58)+`<path d="M50 66 42 50"/><path d="M70 66 78 50"/><path d="M50 66h20"/><path d="M60 72v10"/>`)},
+
+  table_row:{name:'桌下划船',tag:'背 · 二头',unit:'次',tips:[
+    '找一张结实的桌子，仰躺在下面，双手抓桌沿把身体拉上去。',
+    '身体保持一条直线，胸口靠近桌沿。',
+    '脚越往前越难，先屈膝做。',
+    '务必确认桌子够稳，别用轻质折叠桌。'],
+    fig:FIG(H(52,52)+`<path d="M18 46h84M26 46v40M94 46v40" stroke-opacity=".45"/><path d="M58 46 58 58 66 72 88 84"/><path d="M66 60v-8M62 56l4-4 4 4" stroke-opacity=".6"/>`)},
+
+  backpack_row:{name:'背包单臂划船',tag:'背 · 二头',unit:'次',tips:[
+    '书包里装几本书当哑铃，一手扶床/椅背，另一手拉起。',
+    '背部保持平直，肘部贴身后拉，肩胛骨夹紧。',
+    '这是宿舍里最实用的“拉”动作，别再只练俯卧撑了。'],
+    fig:FIG(H(66,38)+`<path d="M46 58 60 44"/><path d="M46 58 44 72 44 86"/><path d="M60 44 58 66"/><rect x="50" y="66" width="15" height="15" rx="4" stroke-opacity=".55"/>`)},
+
+  jumping_jack:{name:'开合跳',tag:'心肺 · 全身',unit:'秒',hold:true,quiet:true,tips:[
+    '跳起同时双腿打开、双手过头，再跳回。',
+    '落地轻，膝盖微屈缓冲。',
+    '楼下有人时请打开「静音模式」换成靠墙静蹲。'],
+    fig:FIG(H(60,22)+`<path d="M60 34v20"/><path d="M60 34 34 14"/><path d="M60 34 86 14"/><path d="M60 54 44 86"/><path d="M60 54 76 86"/>`)},
+
+  high_knees:{name:'高抬腿',tag:'心肺 · 腿部',unit:'秒',hold:true,quiet:true,tips:[
+    '原地交替把膝盖抬到髋部高度，手臂配合摆动。',
+    '前脚掌落地，不要砸脚跟。',
+    '楼下有人时改用登山跑（慢速）。'],
+    fig:FIG(H(60,22)+`<path d="M60 34v20"/><path d="M60 54 74 62 74 74"/><path d="M60 54 48 86"/><path d="M60 34 44 44"/><path d="M60 34 74 46"/>`)},
+
+  step_up:{name:'台阶踏步',tag:'腿 · 臀',unit:'次',tips:[
+    '找一级稳固的台阶或楼梯，一脚踩上，用大腿发力把身体撑起。',
+    '不要用后腿蹬地借力，全程由上面的腿发力。',
+    '上升 2 秒、下降 2 秒，控制节奏。'],
+    fig:FIG(H(50,17)+`<path d="M52 24 54 42"/><path d="M54 42 52 62 50 84"/><path d="M54 42 70 54 78 64"/><path d="M70 64h40M76 64v24M104 64v24" stroke-opacity=".45"/>`)},
+
+  cat_cow:{name:'猫牛式',tag:'脊柱 · 放松',unit:'次',tips:[
+    '四点跪姿，吸气塌腰抬头（牛式），呼气弓背低头（猫式）。',
+    '跟着呼吸慢慢来，每个方向 2 秒。',
+    '久坐后腰背僵硬最先做这个。'],
+    fig:FIG(H(24,58)+`<path d="M36 64Q54 50 72 62"/><path d="M32 84 36 64"/><path d="M76 84 72 62"/>`)},
+
+  hip_flexor_stretch:{name:'髋屈肌拉伸',tag:'髋 · 久坐必做',unit:'秒',hold:true,tips:[
+    '单膝跪地成弓步，后腿髋部往前送，感受大腿前侧拉伸。',
+    '腰不要塌，收紧臀部再往前推。',
+    '每侧 30 秒，久坐一天后特别管用。'],
+    fig:FIG(H(48,35)+`<path d="M48 44v20"/><path d="M48 64 64 68 68 88"/><path d="M48 64 34 86"/><path d="M34 86H18"/>`)}
+};
+
+/* ============================================================
+   2. 每周训练计划（4 天力量 + 1 天恢复 + 2 天休息）
+   ============================================================ */
+const PLAN = [
+  {day:'周一',title:'上肢推 + 核心',sub:'练胸、肩、手臂',items:[
+    {ex:'pushup',sets:4,reps:'8-12',rest:75},
+    {ex:'incline_pushup',sets:3,reps:'10-15',rest:60},
+    {ex:'pike_pushup',sets:3,reps:'6-10',rest:75},
+    {ex:'plank',sets:3,reps:'30-45 秒',rest:45},
+    {ex:'dead_bug',sets:3,reps:'10 / 侧',rest:45}
+  ]},
+  {day:'周二',title:'下肢 A',sub:'腿、臀、小腿',items:[
+    {ex:'squat',sets:4,reps:'15-20',rest:60},
+    {ex:'lunge',sets:3,reps:'10 / 腿',rest:60},
+    {ex:'glute_bridge',sets:3,reps:'15-20',rest:45},
+    {ex:'calf_raise',sets:3,reps:'20',rest:30},
+    {ex:'wall_sit',sets:2,reps:'40 秒',rest:45}
+  ]},
+  {day:'周三',title:'主动恢复',sub:'不练力量，只活动',items:[
+    {ex:'cat_cow',sets:2,reps:'10',rest:30},
+    {ex:'hip_flexor_stretch',sets:2,reps:'30 秒 / 侧',rest:20},
+    {note:'快走 20–30 分钟，不追配速，走起来就行。'}
+  ]},
+  {day:'周四',title:'上肢拉 + 体态',sub:'背、后肩、改善圆肩',items:[
+    {ex:'table_row',sets:4,reps:'8-12',rest:75},
+    {ex:'backpack_row',sets:3,reps:'10 / 侧',rest:60},
+    {ex:'prone_y',sets:3,reps:'12',rest:45},
+    {ex:'superman',sets:3,reps:'12',rest:45},
+    {ex:'side_plank',sets:2,reps:'30 秒 / 侧',rest:30}
+  ]},
+  {day:'周五',title:'下肢 B + 核心',sub:'单腿为主，最累的一天',items:[
+    {ex:'bulgarian',sets:3,reps:'8-10 / 腿',rest:75},
+    {ex:'step_up',sets:3,reps:'12 / 腿',rest:60},
+    {ex:'glute_bridge',sets:3,reps:'10 / 腿',rest:45},
+    {ex:'mountain_climber',sets:3,reps:'30 秒',rest:45},
+    {ex:'crunch',sets:3,reps:'15',rest:45},
+    {ex:'reverse_crunch',sets:3,reps:'12',rest:45}
+  ]},
+  {day:'周六',title:'轻有氧（可选）',sub:'精神好就做，累就跳过',items:[
+    {ex:'jumping_jack',sets:3,reps:'30 秒',rest:40},
+    {ex:'high_knees',sets:3,reps:'20 秒',rest:40,alt:'mountain_climber'}
+  ]},
+  {day:'周日',title:'完全休息',sub:'肌肉是在休息时长出来的',items:[],rest:true}
+];
+
+/* 静音模式：楼下有人时用的替代动作 */
+const QUIET_ALT = {jumping_jack:'wall_sit', high_knees:'mountain_climber'};
+
+/* ============================================================
+   3. 状态与存储
+   ============================================================ */
+const KEY = 'dorm-fit-v1';
+const defState = () => ({done:{}, quiet:false, tab:'today', createdAt:Date.now()});
+let S = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return defState();
+    const o = JSON.parse(raw);
+    return Object.assign(defState(), o, {done:o.done||{}});
+  }catch(e){ return defState(); }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+const p2 = n => String(n).padStart(2,'0');
+const dkey = d => `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+const todayIdx = () => (new Date().getDay()+6)%7;      // 0 = 周一
+const WD = ['周一','周二','周三','周四','周五','周六','周日'];
+
+/* 今天用到的动作（应用静音模式替换）。
+   打卡记录用「当天计划里的序号 idx」做键，而不是动作名：
+   这样静音模式把开合跳换成靠墙静蹲后，历史记录也不会错位。 */
+function todayItems(){
+  return PLAN[todayIdx()].items.map((it, idx)=>{
+    const ex = (S.quiet && QUIET_ALT[it.ex]) ? QUIET_ALT[it.ex] : it.ex;
+    return Object.assign({}, it, {ex:ex, idx:idx});
+  });
+}
+const todayKey = () => dkey(new Date());
+const doneMap = () => (S.done[todayKey()] = S.done[todayKey()] || {});
+const setsDone = idx => doneMap()['i'+idx] || 0;
+
+function markSet(idx, total){
+  const m = doneMap();
+  m['i'+idx] = Math.min(total, (m['i'+idx]||0)+1);
+  save();
+  return m['i'+idx];
+}
+function isDayDone(items){
+  const real = items.filter(i=>!i.note);
+  if(!real.length) return false;
+  return real.every(i=>setsDone(i.idx) >= i.sets);
+}
+function streak(){
+  let n = 0, d = new Date();
+  if(!isDayDone(todayItems())) d.setDate(d.getDate()-1);   // 今天还没做完，不算断
+  for(let guard=0; guard<400; guard++){
+    const idx = (d.getDay()+6)%7;
+    const items = PLAN[idx].items.map((it,i)=>Object.assign({},it,{idx:i})).filter(i=>!i.note);
+    if(!items.length){ d.setDate(d.getDate()-1); continue; }   // 休息日不断档
+    const rec = S.done[dkey(d)] || {};
+    if(!items.every(it=>(rec['i'+it.idx]||0) >= it.sets)) break;
+    n++; d.setDate(d.getDate()-1);
+  }
+  return n;
+}
+
+/* ============================================================
+   4. 视图
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const view = () => $('view');
+
+const TABS = [
+  {id:'today', label:'今日', d:'M4 12l8-8 8 8v8H4z'},
+  {id:'plan',  label:'计划', d:'M3 5h18M3 12h18M3 19h12'},
+  {id:'stats', label:'统计', d:'M4 20V10M10 20V4M16 20v-7M22 20H2'},
+  {id:'me',    label:'我的', d:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 4-6 8-6s8 2 8 6'}
+];
+
+function ring(percent, size=64){
+  const r = 27, c = 2*Math.PI*r, off = c*(1-percent);
+  return `<div class="ring" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--line)" stroke-width="6"/>
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--ok)" stroke-width="6"
+        stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}"
+        style="transition:stroke-dashoffset .4s"/>
+    </svg><div class="pct">${Math.round(percent*100)}%</div></div>`;
+}
+
+/* ---------- 今日 ---------- */
+function viewToday(){
+  const idx = todayIdx(), plan = PLAN[idx], items = todayItems();
+  const exItems = items.filter(i=>!i.note);
+  const totalSets = exItems.reduce((a,b)=>a+b.sets,0);
+  const doneSets = exItems.reduce((a,b)=>a+Math.min(setsDone(b.idx),b.sets),0);
+  const pct = totalSets ? doneSets/totalSets : (plan.rest?1:0);
+  const now = new Date();
+
+  $('eyebrow').textContent = `${now.getFullYear()}.${p2(now.getMonth()+1)}.${p2(now.getDate())} ${WD[idx]}`;
+  $('title').textContent = plan.title;
+  $('head-right').innerHTML = `<span class="chip ${isDayDone(items)?'ok':''}">${isDayDone(items)?'已完成':'待完成'}</span>`;
+
+  if(plan.rest){
+    view().innerHTML = `
+      <div class="card row" style="gap:16px">
+        <div style="font-size:38px">🌙</div>
+        <div class="grow"><b>今天是休息日</b>
+        <div class="small muted" style="margin-top:4px">肌肉在休息时才长。走走路、早点睡，比多练一组更有用。</div></div>
+      </div>
+      <div class="card">
+        <div class="small muted">明日安排</div>
+        <div style="font-weight:650;margin-top:3px">${PLAN[0].title} · ${PLAN[0].items.length} 个动作</div>
+      </div>`;
+    return;
+  }
+
+  view().innerHTML = `
+    <div class="card row">
+      ${ring(pct)}
+      <div class="grow">
+        <div style="font-weight:650">${plan.sub}</div>
+        <div class="small muted" style="margin-top:2px">${exItems.length} 个动作 · 共 ${totalSets} 组 · 约 ${Math.round(totalSets*1.4+5)} 分钟</div>
+        <div class="small" style="margin-top:6px;color:var(--ok);font-weight:600">${doneSets}/${totalSets} 组</div>
+      </div>
+    </div>
+    <div class="card">
+      ${items.map(it=>it.note ? `<div class="note">🏃 ${it.note}</div>` : exCard(it)).join('<div class="sep"></div>')}
+    </div>
+    <div class="note">ℹ️ <b>渐进超负荷</b>：第 1–2 周做次数区间下限；之后每周多 1–2 次或多 1 组；4 周后换更难变式（俯卧撑→下斜→折体，深蹲→保加利亚分腿蹲）。</div>
+    <footer>做完一组点一下小圆点，自动开始组间休息</footer>`;
+}
+
+function exCard(it){
+  const e = EX[it.ex];
+  if(!e) return '';
+  const d = Math.min(setsDone(it.idx), it.sets);
+  const full = d >= it.sets;
+  const dots = Array.from({length:it.sets},(_,i)=>
+    `<button class="dot ${i<d?'on':''}" data-key="${it.idx}" data-total="${it.sets}" data-rest="${it.rest}" aria-label="第${i+1}组">${i+1}</button>`).join('');
+  return `<div class="ex">
+    <div class="fig" data-idx="${it.idx}" style="cursor:pointer">${e.fig}</div>
+    <div class="grow" data-idx="${it.idx}" style="cursor:pointer">
+      <div class="nm">${e.name}</div>
+      <div class="mt">${it.sets} 组 × ${it.reps}${full?' · <span class="done-label">已完成</span>':''}</div>
+      <div class="dots">${dots}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 计划 ---------- */
+function viewPlan(){
+  $('eyebrow').textContent = '每周固定安排';
+  $('title').textContent = '训练计划';
+  $('head-right').innerHTML = `<span class="chip gray">${S.quiet?'静音模式':'正常模式'}</span>`;
+  view().innerHTML = `<div class="card">${PLAN.map((p,i)=>{
+    const n = p.items.filter(x=>!x.note).length;
+    return `<div class="week-row ${i===todayIdx()?'today':''}" data-day="${i}">
+      <div class="day">${p.day}</div>
+      <div class="grow"><div style="font-weight:600">${p.title}${i===todayIdx()?' <span class="chip" style="margin-left:4px">今天</span>':''}</div>
+        <div class="small muted" style="margin-top:1px">${p.sub}</div></div>
+      <div class="small muted">${n?n+' 动作':'休息'}</div>
+    </div>`;}).join('')}</div>
+    <div class="note">这个计划每周重复。力量日之间至少隔一天练同一部位，所以周一推、周二腿、周四拉、周五腿，周三和周末留出来恢复。</div>`;
+}
+
+/* ---------- 统计 ---------- */
+function viewStats(){
+  const st = streak();
+  let weekDone = 0, total = 0;
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const idx = (d.getDay()+6)%7, plan = PLAN[idx];
+    const items = plan.items.map((x,k)=>Object.assign({},x,{idx:k})).filter(x=>!x.note);
+    const rec = S.done[dkey(d)]||{};
+    const ok = items.length ? items.every(x=>(rec['i'+x.idx]||0) >= x.sets) : false;
+    const partial = items.length ? items.reduce((a,x)=>a+Math.min(rec['i'+x.idx]||0,x.sets),0)/items.reduce((a,x)=>a+x.sets,0) : 0;
+    if(ok) weekDone++;
+    if(ok) total++;
+    days.push({label:WD[idx].slice(1), v:partial, ok});
+  }
+  $('eyebrow').textContent = '坚持比强度重要';
+  $('title').textContent = '我的进度';
+  $('head-right').innerHTML = '';
+
+  view().innerHTML = `
+    <div class="stat-grid">
+      <div class="stat"><b>${st}</b><span>连续天数</span></div>
+      <div class="stat"><b>${weekDone}</b><span>近 7 天完成</span></div>
+      <div class="stat"><b>${Object.keys(S.done).length}</b><span>累计训练日</span></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="small muted">最近 7 天完成度</div>
+      <div class="bars">${days.map(d=>`<div class="b"><i class="${d.ok?'f':''}" style="height:${Math.max(4,d.v*64)}px"></i><span>${d.label}</span></div>`).join('')}</div>
+    </div>
+    <div class="note">💡 少练一天不会毁掉成果，连续两周不练才会。哪天断了，第二天照常练就行。</div>
+    <footer>数据保存在本机浏览器，换设备不会同步</footer>`;
+}
+
+/* ---------- 我的 ---------- */
+let deferredPrompt = null;                       // 浏览器给出的「安装」事件，存在才能一键安装
+const isStandalone = () => !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+function viewMe(){
+  $('eyebrow').textContent = '设置';
+  $('title').textContent = '我的';
+  $('head-right').innerHTML = '';
+  view().innerHTML = `
+    <div class="card">
+      <div style="font-weight:650;margin-bottom:8px">安装到手机桌面</div>
+      ${isStandalone()
+        ? `<div class="small muted">已安装 ✓ 现在就是独立窗口，断网也能用。</div>`
+        : (deferredPrompt
+            ? `<div class="small muted" style="margin-bottom:10px">装到桌面后全屏打开、没有地址栏，断网也能用。</div>
+               <button class="btn soft" id="btn-install">立即安装</button>`
+            : `<div class="small" style="line-height:1.8">
+                 <b>iPhone</b>：用 <b>Safari</b> 打开本页 → 底部「分享」→「添加到主屏幕」<br>
+                 <b>Android</b>：用 <b>Chrome / Edge</b> 打开 → 右上角 ⋮ →「安装应用」/「添加到主屏幕」
+               </div>
+               <div class="small muted" style="margin-top:8px">要出现「安装应用」按钮，页面需通过 https 打开；http 只能加书签。</div>`)}
+    </div>
+    <div class="card">
+      <div class="row">
+        <div class="grow"><div style="font-weight:600">静音模式</div>
+        <div class="small muted" style="margin-top:2px">把跳跃动作换成靠墙静蹲、慢速登山跑，楼下不吵</div></div>
+        <div class="switch ${S.quiet?'on':''}" id="sw-quiet"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:650;margin-bottom:8px">吃与睡（你这体型最关键的部分）</div>
+      <div class="small" style="line-height:1.75">
+        · 你 175cm / 60kg，BMI 19.6 偏瘦，目标是<b>增肌</b>不是减脂<br>
+        · 每天蛋白 <b>75–95 g</b>：2 个鸡蛋 + 1 盒牛奶 + 1 个鸡腿 + 一份豆腐就差不多<br>
+        · 每天比现在多吃 <b>300 kcal</b>（一碗饭 + 一个蛋），吃不够练白搭<br>
+        · 睡 <b>7–8 小时</b>，比任何补剂都重要
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:650;margin-bottom:8px">安全提醒</div>
+      <div class="small muted" style="line-height:1.7">
+        动作中若出现关节刺痛（不是肌肉酸）立刻停。<br>
+        有旧伤、心脏病、腰椎问题请先咨询医生或康复师。<br>
+        桌下划船务必确认桌子稳固，别用折叠桌。
+      </div>
+    </div>
+    <button class="btn ghost" id="reset" style="color:var(--warn)">清除所有打卡记录</button>
+    <footer>宿舍健身 · 可安装 PWA · v1.1</footer>`;
+}
+
+/* ============================================================
+   5. 动作详情抽屉 + 计时器
+   ============================================================ */
+let restTimer = null, restLeft = 0;
+
+function openEx(exId, item){
+  const e = EX[exId];
+  if(!e) return;
+  const hold = item && item.hold !== undefined ? item.hold : e.hold;
+  const total = item ? item.reps : '';
+  $('sheet').innerHTML = `
+    <div class="grab"></div>
+    <div class="big">${e.fig}</div>
+    <h2>${e.name}</h2>
+    <div class="kv">
+      <span class="chip">${e.tag}</span>
+      ${item?`<span class="chip gray">${item.sets} 组 × ${item.reps}</span>`:''}
+      ${item?`<span class="chip gray">组间休息 ${item.rest}s</span>`:''}
+    </div>
+    <ul class="tips">${e.tips.map(t=>`<li>${t}</li>`).join('')}</ul>
+    ${hold?`<button class="btn soft" id="hold-btn" style="margin-top:16px">开始 ${total||'计时'}</button>`:''}
+    <button class="btn ghost" id="close-sheet" style="margin-top:10px">关闭</button>`;
+  $('sheet').classList.add('on');
+  $('bd').classList.add('on');
+  if(hold){
+    $('hold-btn').onclick = ()=>{
+      // 从 "30-45 秒" 这类文字里取第一个数字
+      const m = String(total||'').match(/\d+/);
+      startRest(m ? +m[0] : 30, '计时');
+    };
+  }
+}
+function closeSheet(){
+  $('sheet').classList.remove('on');
+  $('bd').classList.remove('on');
+}
+function startRest(secs, label){
+  clearInterval(restTimer);
+  restLeft = secs;
+  $('rest').querySelector('span').textContent = label || '休息';
+  $('rest-t').textContent = restLeft;
+  $('rest').classList.add('on');
+  restTimer = setInterval(()=>{
+    restLeft--;
+    $('rest-t').textContent = Math.max(0, restLeft);
+    if(restLeft <= 0){ clearInterval(restTimer); $('rest').classList.remove('on'); }
+  }, 1000);
+}
+
+/* ============================================================
+   6. 渲染与事件
+   ============================================================ */
+function renderTabs(){
+  $('tabs').innerHTML = TABS.map(t=>`
+    <button class="tab ${S.tab===t.id?'on':''}" data-tab="${t.id}">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"><path d="${t.d}"/></svg>
+      <span>${t.label}</span></button>`).join('');
+}
+function render(){
+  renderTabs();
+  if(S.tab==='today') viewToday();
+  else if(S.tab==='plan') viewPlan();
+  else if(S.tab==='stats') viewStats();
+  else viewMe();
+  window.scrollTo({top:0});
+}
+
+document.addEventListener('click', ev=>{
+  const t = ev.target.closest('[data-tab]');
+  if(t){ S.tab = t.dataset.tab; save(); render(); return; }
+
+  const dot = ev.target.closest('.dot');
+  if(dot){
+    ev.stopPropagation();
+    const key = +dot.dataset.key, total = +dot.dataset.total, rest = +dot.dataset.rest;
+    const n = markSet(key, total);
+    render();
+    if(n < total) startRest(rest, '休息');
+    return;
+  }
+
+  const open = ev.target.closest('[data-idx]');
+  if(open){
+    const key = +open.dataset.idx;
+    const item = todayItems().find(i=>i.idx===key);
+    if(item) openEx(item.ex, item);
+    return;
+  }
+
+  const day = ev.target.closest('[data-day]');
+  if(day){
+    const d = +day.dataset.day, p = PLAN[d];
+    $('sheet').innerHTML = `<div class="grab"></div>
+      <h2>${p.day} · ${p.title}</h2>
+      <div class="kv"><span class="chip">${p.sub}</span><span class="chip gray">${p.items.filter(i=>!i.note).length} 个动作</span></div>
+      <div style="margin-top:14px">
+      ${p.items.map(it=>it.note?`<div class="note">🏃 ${it.note}</div>`:
+        `<div class="ex"><div class="fig">${EX[it.ex].fig}</div>
+         <div class="grow"><div class="nm">${EX[it.ex].name}</div>
+         <div class="mt">${it.sets} 组 × ${it.reps} · 休息 ${it.rest}s</div></div></div>`).join('<div class="sep"></div>')}
+      </div>
+      <button class="btn ghost" id="close-sheet" style="margin-top:14px">关闭</button>`;
+    $('sheet').classList.add('on'); $('bd').classList.add('on');
+    return;
+  }
+
+  if(ev.target.id==='close-sheet' || ev.target.id==='bd'){ closeSheet(); return; }
+  if(ev.target.id==='rest-skip' || ev.target.closest('#rest-skip')){
+    clearInterval(restTimer); $('rest').classList.remove('on'); return;
+  }
+  if(ev.target.id==='sw-quiet'){
+    S.quiet = !S.quiet; save(); render(); return;
+  }
+  if(ev.target.id==='btn-install'){
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(()=>{ deferredPrompt = null; render(); }).catch(()=>{});
+    }
+    return;
+  }
+  if(ev.target.id==='reset'){
+    if(confirm('确定清除所有打卡记录？')){
+      S.done = {}; save(); render();
+    }
+  }
+});
+
+/* ============================================================
+   7. PWA：安装提示 + 离线缓存
+   ============================================================ */
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  if(S.tab === 'me') render();          // 让「我的」页立刻出现安装按钮
+});
+window.addEventListener('appinstalled', ()=>{ deferredPrompt = null; });
+
+if('serviceWorker' in navigator && location.protocol !== 'file:'){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{
+      /* 非 https / localhost 下注册会失败，忽略即可，功能不受影响 */
+    });
+  });
+}
+
+/* 启动 */
+render();
+</script>
+</body>
+</html>
